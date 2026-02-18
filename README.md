@@ -4,15 +4,41 @@ A fun little experiment in automating GitHub's contribution graph. Checks your r
 
 > **Heads up:** This is a personal hobby project built purely for fun and curiosity — not meant to deceive anyone. It artificially fills your GitHub contribution graph with auto-generated commits. It won't make you a better developer, and anyone reviewing your actual repos will see the difference. Use at your own risk and don't take your green squares too seriously.
 
+## Project Structure
+
+```
+mosaic/
+├── unix/                  # macOS / Linux scripts
+│   ├── commit.sh          # Daily commit script
+│   ├── backfill.sh        # Backfill historical dates
+│   └── com.mosaic.daily.plist  # macOS launchd schedule
+├── win/                   # Windows scripts
+│   ├── commit.ps1         # Daily commit script (PowerShell)
+│   ├── backfill.ps1       # Backfill historical dates (PowerShell)
+│   ├── mosaic-daily.xml   # Task Scheduler XML template
+│   └── install-task.ps1   # One-click Task Scheduler setup
+├── contributions.log      # Auto-generated commit log
+└── README.md
+```
+
 ## Prerequisites
+
+### macOS / Linux
 
 - [GitHub CLI](https://cli.github.com/) installed and authenticated: `brew install gh && gh auth login`
 - Git configured with an email that matches your GitHub account: `git config user.email "your@email.com"`
-- A GitHub repo (fork of this repo) with this code pushed to it
+- A GitHub repo with this code pushed to it
+
+### Windows
+
+- [GitHub CLI](https://cli.github.com/) installed and authenticated: `winget install GitHub.cli` then `gh auth login`
+- Git for Windows installed: `winget install Git.Git`
+- Git configured with an email that matches your GitHub account: `git config user.email "your@email.com"`
+- PowerShell 5.1+ (comes with Windows 10/11)
 
 ## Setup
 
-1. Clone (fork) this repo and set up the remote:
+1. Clone this repo and set up the remote:
 
    ```bash
    git clone <your-private-repo-url>
@@ -28,30 +54,44 @@ A fun little experiment in automating GitHub's contribution graph. Checks your r
 
 ## Daily Usage (Manual)
 
-Run whenever you want to top up today's contributions:
+### macOS / Linux
 
 ```bash
-./commit.sh
+./unix/commit.sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+.\win\commit.ps1
 ```
 
 It will check your current contribution count for today via the GitHub API, pick a random target (0-45), and add only the needed commits.
 
 ## Backfill Past Dates
 
-Fill in historical dates with commits:
+### macOS / Linux
 
 ```bash
-./backfill.sh 2025-06-18 2026-02-18
+./unix/backfill.sh 2025-06-18 2026-02-18
+```
+
+### Windows (PowerShell)
+
+```powershell
+.\win\backfill.ps1 2025-06-18 2026-02-18
 ```
 
 This generates 0-45 commits per day across the date range with randomized timestamps (9am-11pm). GitHub's profile only shows the last ~1 year, so there's no point going further back.
 
-## Automatic Scheduling (launchd)
+## Automatic Scheduling
+
+### macOS (launchd)
 
 Install the launchd agent to run `commit.sh` every day at 9 PM:
 
 ```bash
-cp com.mosaic.daily.plist ~/Library/LaunchAgents/
+cp unix/com.mosaic.daily.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.mosaic.daily.plist
 ```
 
@@ -68,7 +108,29 @@ To manually trigger a run:
 launchctl kickstart gui/$(id -u)/com.mosaic.daily
 ```
 
-Logs are written to `~/.mosaic.log`.
+### Windows (Task Scheduler)
+
+Run the installer from an elevated (Admin) PowerShell prompt:
+
+```powershell
+.\win\install-task.ps1
+```
+
+If the repo isn't at `C:\mosaic`, pass the path:
+
+```powershell
+.\win\install-task.ps1 -RepoPath "D:\path\to\mosaic"
+```
+
+To uninstall:
+
+```powershell
+Unregister-ScheduledTask -TaskName "MosaicDaily"
+```
+
+Alternatively, import `win\mosaic-daily.xml` directly via Task Scheduler GUI (edit the path inside the XML first).
+
+Logs are written to `~/.mosaic.log` (Unix) or `%USERPROFILE%\.mosaic.log` (Windows).
 
 ## How It Works
 

@@ -2,7 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CONTRIBUTIONS_FILE="$SCRIPT_DIR/contributions.log"
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONTRIBUTIONS_FILE="$REPO_DIR/contributions.log"
 
 if [ $# -ne 2 ]; then
     echo "Usage: ./backfill.sh START_DATE END_DATE"
@@ -24,7 +25,7 @@ if ! date -j -f "%Y-%m-%d" "$END_DATE" "+%s" &>/dev/null; then
     exit 1
 fi
 
-cd "$SCRIPT_DIR"
+cd "$REPO_DIR"
 
 if ! git remote get-url origin &>/dev/null; then
     echo "ERROR: No git remote 'origin' configured."
