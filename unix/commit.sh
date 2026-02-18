@@ -35,6 +35,19 @@ if [ -z "$GIT_EMAIL" ]; then
     exit 1
 fi
 
+# --- Check if repo is a fork (forks don't count toward contributions) ---
+
+REMOTE_URL="$(git remote get-url origin)"
+REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's#(.*github\.com[:/])##; s#\.git$##')"
+
+IS_FORK=$(gh api "repos/$REPO_SLUG" --jq '.fork' 2>/dev/null || echo "unknown")
+if [ "$IS_FORK" = "true" ]; then
+    log "ERROR: This repo is a GitHub fork. Commits to forks do NOT count as contributions."
+    log "       Create your own repo instead: gh repo create <name> --private"
+    log "       Then update the remote: git remote set-url origin <new-url>"
+    exit 1
+fi
+
 # --- Query today's contribution count ---
 
 TODAY="$(date -u '+%Y-%m-%d')"

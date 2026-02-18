@@ -25,6 +25,16 @@ if ! date -j -f "%Y-%m-%d" "$END_DATE" "+%s" &>/dev/null; then
     exit 1
 fi
 
+if ! command -v gh &>/dev/null; then
+    echo "ERROR: gh CLI is not installed. Install it with: brew install gh"
+    exit 1
+fi
+
+if ! gh auth status &>/dev/null; then
+    echo "ERROR: gh CLI is not authenticated. Run: gh auth login"
+    exit 1
+fi
+
 cd "$REPO_DIR"
 
 if ! git remote get-url origin &>/dev/null; then
@@ -35,6 +45,19 @@ fi
 GIT_EMAIL="$(git config user.email || true)"
 if [ -z "$GIT_EMAIL" ]; then
     echo "ERROR: git user.email is not set. Run: git config user.email \"your@email.com\""
+    exit 1
+fi
+
+# --- Check if repo is a fork (forks don't count toward contributions) ---
+
+REMOTE_URL="$(git remote get-url origin)"
+REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's#(.*github\.com[:/])##; s#\.git$##')"
+
+IS_FORK=$(gh api "repos/$REPO_SLUG" --jq '.fork' 2>/dev/null || echo "unknown")
+if [ "$IS_FORK" = "true" ]; then
+    echo "ERROR: This repo is a GitHub fork. Commits to forks do NOT count as contributions."
+    echo "       Create your own repo instead: gh repo create <name> --private"
+    echo "       Then update the remote: git remote set-url origin <new-url>"
     exit 1
 fi
 

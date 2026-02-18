@@ -56,6 +56,19 @@ if ([string]::IsNullOrEmpty($GitEmail)) {
     exit 1
 }
 
+# --- Check if repo is a fork (forks don't count toward contributions) ---
+
+$RemoteUrl = git remote get-url origin
+$RepoSlug = $RemoteUrl -replace '.*github\.com[:/]' -replace '\.git$'
+
+$IsFork = gh api "repos/$RepoSlug" --jq '.fork' 2>$null
+if ($IsFork -eq "true") {
+    Write-Log "ERROR: This repo is a GitHub fork. Commits to forks do NOT count as contributions."
+    Write-Log "       Create your own repo instead: gh repo create <name> --private"
+    Write-Log "       Then update the remote: git remote set-url origin <new-url>"
+    exit 1
+}
+
 # --- Query today's contribution count ---
 
 $Today = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")

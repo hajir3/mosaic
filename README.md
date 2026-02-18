@@ -38,19 +38,27 @@ mosaic/
 
 ## Setup
 
-1. Clone this repo and set up the remote:
+> **Commits in forked repos do NOT count toward your GitHub contribution graph.** You must detach the fork first. The scripts will detect this and block execution until it's fixed.
+
+1. **Fork** this repo via the GitHub "Fork" button
+2. Go to your fork's **Settings > General**, scroll to the **Danger Zone**
+3. Click **"Detach fork"** — this converts it into a standalone repo
+4. Make it **private**: Settings > General > Danger Zone > Change visibility > Private
+5. Clone your repo:
 
    ```bash
-   git clone <your-private-repo-url>
+   git clone https://github.com/<your-username>/mosaic.git
    cd mosaic
    ```
-2. Make sure your git email matches your GitHub account:
+
+6. Set your git email to match your GitHub account:
 
    ```bash
    git config user.email "your@email.com"
    ```
-3. Enable **Private contributions** on your GitHub profile:
-   Go to your GitHub profile > Contribution Settings > check "Private contributions"
+
+7. Enable **Private contributions** on your GitHub profile:
+   Go to your profile > Contribution Settings > check "Private contributions"
 
 ## Daily Usage (Manual)
 
