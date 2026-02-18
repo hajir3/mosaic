@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="$HOME/.mosaic.log"
-CONTRIBUTIONS_FILE="$SCRIPT_DIR/contributions.log"
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONTRIBUTIONS_FILE="$REPO_DIR/contributions.log"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -21,7 +22,7 @@ if ! gh auth status &>/dev/null; then
     exit 1
 fi
 
-cd "$SCRIPT_DIR"
+cd "$REPO_DIR"
 
 if ! git remote get-url origin &>/dev/null; then
     log "ERROR: No git remote 'origin' configured."
