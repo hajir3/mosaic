@@ -17,7 +17,21 @@ function Write-Log {
 
 # --- Pre-flight checks ---
 
-if (-not (Get-Command "gh" -ErrorAction SilentlyContinue)) {
+# Try to locate gh on the PATH first.  If that fails, look in the
+# standard installation directory used by winget.  If we find it there
+# we add the folder to PATH so subsequent calls succeed.
+$ghCmd = Get-Command "gh" -ErrorAction SilentlyContinue
+if (-not $ghCmd) {
+    $default = "C:\Program Files\GitHub CLI\gh.exe"
+    if (Test-Path $default) {
+        # Add its directory to PATH for this session so Get-Command works
+        $dir = Split-Path $default
+        $env:PATH += ";$dir"
+        $ghCmd = Get-Command "gh" -ErrorAction SilentlyContinue
+    }
+}
+
+if (-not $ghCmd) {
     Write-Log "ERROR: gh CLI is not installed. Install it with: winget install GitHub.cli"
     exit 1
 }
