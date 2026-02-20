@@ -90,7 +90,7 @@ It will check your current contribution count for today via the GitHub API, pick
 .\win\backfill.ps1 2025-06-18 2026-02-18
 ```
 
-This generates 0-45 commits per day across the date range with randomized timestamps (9am-11pm). GitHub's profile only shows the last ~1 year, so there's no point going further back.
+This generates 0-45 commits per day across the date range with randomized timestamps (9am-11pm).
 
 ## Automatic Scheduling
 
