@@ -111,7 +111,7 @@ while ($CurrentDate -le $EndDate) {
     # Activity roll
     $Roll = Get-Random -Minimum 0.0 -Maximum 1.0
     if ($Roll -ge $Activity) {
-        Write-Host "  $CurrentDateStr - skipped (activity)"
+        Write-Host "  $CurrentDateStr - skipped (bad chance)"
         $CurrentDate = $CurrentDate.AddDays(1)
         continue
     }

@@ -94,9 +94,9 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
     fi
 
     # Activity roll
-    ROLL=$(awk "BEGIN {srand(); print rand()}")
+    ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
     if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
-        echo "  $CURRENT_DATE — skipped (activity)"
+        echo "  $CURRENT_DATE — skipped (bad chance)"
         CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
         continue
     fi

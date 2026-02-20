@@ -27,7 +27,7 @@ fi
 
 # --- Activity check ---
 
-ROLL=$(awk "BEGIN {srand(); print rand()}")
+ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
 if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
     log "Activity roll $ROLL >= $ACTIVITY — skipping today."
     exit 0
