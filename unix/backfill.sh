@@ -12,15 +12,26 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 source "$CONFIG_FILE"
 
-if [ $# -ne 2 ]; then
-    echo "Usage: ./backfill.sh START_DATE END_DATE"
+DRY_RUN=false
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--dry-run" ]; then
+        DRY_RUN=true
+    else
+        ARGS+=("$arg")
+    fi
+done
+
+if [ "${#ARGS[@]}" -ne 2 ]; then
+    echo "Usage: ./backfill.sh [--dry-run] START_DATE END_DATE"
     echo "  Dates in YYYY-MM-DD format"
-    echo "  Example: ./backfill.sh 2025-03-01 2026-02-18"
+    echo "  --dry-run   Simulate without committing or pushing"
+    echo "  Example: ./backfill.sh --dry-run 2025-03-01 2026-02-18"
     exit 1
 fi
 
-START_DATE="$1"
-END_DATE="$2"
+START_DATE="${ARGS[0]}"
+END_DATE="${ARGS[1]}"
 
 # Validate date format
 if ! date -j -f "%Y-%m-%d" "$START_DATE" "+%s" &>/dev/null; then
@@ -32,40 +43,42 @@ if ! date -j -f "%Y-%m-%d" "$END_DATE" "+%s" &>/dev/null; then
     exit 1
 fi
 
-if ! command -v gh &>/dev/null; then
-    echo "ERROR: gh CLI is not installed. Install it with: brew install gh"
-    exit 1
-fi
+if [ "$DRY_RUN" = false ]; then
+    if ! command -v gh &>/dev/null; then
+        echo "ERROR: gh CLI is not installed. Install it with: brew install gh"
+        exit 1
+    fi
 
-if ! gh auth status &>/dev/null; then
-    echo "ERROR: gh CLI is not authenticated. Run: gh auth login"
-    exit 1
-fi
+    if ! gh auth status &>/dev/null; then
+        echo "ERROR: gh CLI is not authenticated. Run: gh auth login"
+        exit 1
+    fi
 
-cd "$REPO_DIR"
+    cd "$REPO_DIR"
 
-if ! git remote get-url origin &>/dev/null; then
-    echo "ERROR: No git remote 'origin' configured."
-    exit 1
-fi
+    if ! git remote get-url origin &>/dev/null; then
+        echo "ERROR: No git remote 'origin' configured."
+        exit 1
+    fi
 
-GIT_EMAIL="$(git config user.email || true)"
-if [ -z "$GIT_EMAIL" ]; then
-    echo "ERROR: git user.email is not set. Run: git config user.email \"your@email.com\""
-    exit 1
-fi
+    GIT_EMAIL="$(git config user.email || true)"
+    if [ -z "$GIT_EMAIL" ]; then
+        echo "ERROR: git user.email is not set. Run: git config user.email \"your@email.com\""
+        exit 1
+    fi
 
-# --- Check if repo is a fork (forks don't count toward contributions) ---
+    # --- Check if repo is a fork (forks don't count toward contributions) ---
 
-REMOTE_URL="$(git remote get-url origin)"
-REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's#(.*github\.com[:/])##; s#\.git$##')"
+    REMOTE_URL="$(git remote get-url origin)"
+    REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's#(.*github\.com[:/])##; s#\.git$##')"
 
-IS_FORK=$(gh api "repos/$REPO_SLUG" --jq '.fork' 2>/dev/null || echo "unknown")
-if [ "$IS_FORK" = "true" ]; then
-    echo "ERROR: This repo is a GitHub fork. Commits to forks do NOT count as contributions."
-    echo "       Create your own repo instead: gh repo create <name> --private"
-    echo "       Then update the remote: git remote set-url origin <new-url>"
-    exit 1
+    IS_FORK=$(gh api "repos/$REPO_SLUG" --jq '.fork' 2>/dev/null || echo "unknown")
+    if [ "$IS_FORK" = "true" ]; then
+        echo "ERROR: This repo is a GitHub fork. Commits to forks do NOT count as contributions."
+        echo "       Create your own repo instead: gh repo create <name> --private"
+        echo "       Then update the remote: git remote set-url origin <new-url>"
+        exit 1
+    fi
 fi
 
 # Convert dates to epoch for iteration
@@ -79,7 +92,11 @@ fi
 
 TOTAL_COMMITS=0
 
-echo "Backfilling from $START_DATE to $END_DATE..."
+if [ "$DRY_RUN" = true ]; then
+    echo "[DRY RUN] Simulating backfill from $START_DATE to $END_DATE..."
+else
+    echo "Backfilling from $START_DATE to $END_DATE..."
+fi
 echo ""
 
 while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
@@ -106,32 +123,36 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
 
     TARGET=$((RANDOM % (MAX_COMMITS - MIN_COMMITS + 1) + MIN_COMMITS))
 
-    echo -n "  $CURRENT_DATE — $TARGET commits..."
-
-    for i in $(seq 1 "$TARGET"); do
-        # Random hour between 9 (9am) and 22 (10pm)
-        HOUR=$((RANDOM % 14 + 9))
-        MINUTE=$((RANDOM % 60))
-        SECOND=$((RANDOM % 60))
-        TIMESTAMP=$(printf "%s %02d:%02d:%02d" "$CURRENT_DATE" "$HOUR" "$MINUTE" "$SECOND")
-
-        HASH=$(openssl rand -hex 4)
-        echo "$TIMESTAMP $HASH" >> "$CONTRIBUTIONS_FILE"
-        git add "$CONTRIBUTIONS_FILE"
-
-        GIT_AUTHOR_DATE="$TIMESTAMP" \
-        GIT_COMMITTER_DATE="$TIMESTAMP" \
-        git commit -m "update" --quiet
-    done
-
     TOTAL_COMMITS=$((TOTAL_COMMITS + TARGET))
 
-    # Push after each day so GitHub processes them in small batches
-    if [ "$TARGET" -gt 0 ]; then
-        git push --quiet
-        echo " done (pushed)"
+    if [ "$DRY_RUN" = true ]; then
+        echo "  $CURRENT_DATE — $TARGET commits (simulated)"
     else
-        echo " done (skipped)"
+        echo -n "  $CURRENT_DATE — $TARGET commits..."
+
+        for i in $(seq 1 "$TARGET"); do
+            # Random hour between 9 (9am) and 22 (10pm)
+            HOUR=$((RANDOM % 14 + 9))
+            MINUTE=$((RANDOM % 60))
+            SECOND=$((RANDOM % 60))
+            TIMESTAMP=$(printf "%s %02d:%02d:%02d" "$CURRENT_DATE" "$HOUR" "$MINUTE" "$SECOND")
+
+            HASH=$(openssl rand -hex 4)
+            echo "$TIMESTAMP $HASH" >> "$CONTRIBUTIONS_FILE"
+            git add "$CONTRIBUTIONS_FILE"
+
+            GIT_AUTHOR_DATE="$TIMESTAMP" \
+            GIT_COMMITTER_DATE="$TIMESTAMP" \
+            git commit -m "update" --quiet
+        done
+
+        # Push after each day so GitHub processes them in small batches
+        if [ "$TARGET" -gt 0 ]; then
+            git push --quiet
+            echo " done (pushed)"
+        else
+            echo " done (skipped)"
+        fi
     fi
 
     # Advance to next day (86400 seconds)
@@ -139,5 +160,9 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
 done
 
 echo ""
-echo "Backfill complete: $TOTAL_COMMITS total commits"
-echo "Done!"
+if [ "$DRY_RUN" = true ]; then
+    echo "[DRY RUN] Simulation complete: $TOTAL_COMMITS total commits would be created"
+else
+    echo "Backfill complete: $TOTAL_COMMITS total commits"
+    echo "Done!"
+fi
