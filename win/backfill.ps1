@@ -5,6 +5,20 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoDir = Split-Path -Parent $ScriptDir
 $ContributionsFile = Join-Path $RepoDir "contributions.log"
+$ConfigFile = Join-Path $RepoDir "mosaic.conf"
+
+if (-not (Test-Path $ConfigFile)) {
+    Write-Host "ERROR: Config file not found: $ConfigFile"
+    exit 1
+}
+$config = @{}
+Get-Content $ConfigFile | ForEach-Object {
+    if ($_ -match '^\s*([^#]\S+)\s*=\s*(.+)\s*$') {
+        $config[$Matches[1]] = $Matches[2].Trim()
+    }
+}
+$MinCommits = [int]$config["MIN_COMMITS"]
+$MaxCommits = [int]$config["MAX_COMMITS"]
 
 if ($args.Count -ne 2) {
     Write-Host "Usage: .\backfill.ps1 START_DATE END_DATE"
@@ -84,7 +98,7 @@ Write-Host ""
 $CurrentDate = $StartDate
 while ($CurrentDate -le $EndDate) {
     $CurrentDateStr = $CurrentDate.ToString("yyyy-MM-dd")
-    $Target = Get-Random -Minimum 0 -Maximum 46  # 0 to 45
+    $Target = Get-Random -Minimum $MinCommits -Maximum ($MaxCommits + 1)
 
     Write-Host -NoNewline "  $CurrentDateStr - $Target commits..."
 

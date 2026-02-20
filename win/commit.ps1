@@ -6,6 +6,20 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoDir = Split-Path -Parent $ScriptDir
 $LogFile = Join-Path $env:USERPROFILE ".mosaic.log"
 $ContributionsFile = Join-Path $RepoDir "contributions.log"
+$ConfigFile = Join-Path $RepoDir "mosaic.conf"
+
+if (-not (Test-Path $ConfigFile)) {
+    Write-Host "ERROR: Config file not found: $ConfigFile"
+    exit 1
+}
+$config = @{}
+Get-Content $ConfigFile | ForEach-Object {
+    if ($_ -match '^\s*([^#]\S+)\s*=\s*(.+)\s*$') {
+        $config[$Matches[1]] = $Matches[2].Trim()
+    }
+}
+$MinCommits = [int]$config["MIN_COMMITS"]
+$MaxCommits = [int]$config["MAX_COMMITS"]
 
 function Write-Log {
     param([string]$Message)
@@ -97,7 +111,7 @@ Write-Log "Current contributions today: $ContributionCount"
 
 # --- Calculate how many commits to make ---
 
-$Target = Get-Random -Minimum 0 -Maximum 46  # 0 to 45
+$Target = Get-Random -Minimum $MinCommits -Maximum ($MaxCommits + 1)
 $Needed = $Target - $ContributionCount
 
 if ($Needed -le 0) {

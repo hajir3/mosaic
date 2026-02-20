@@ -4,6 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONTRIBUTIONS_FILE="$REPO_DIR/contributions.log"
+CONFIG_FILE="$REPO_DIR/mosaic.conf"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Config file not found: $CONFIG_FILE"
+    exit 1
+fi
+source "$CONFIG_FILE"
 
 if [ $# -ne 2 ]; then
     echo "Usage: ./backfill.sh START_DATE END_DATE"
@@ -77,7 +84,7 @@ echo ""
 
 while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
     CURRENT_DATE=$(date -j -f "%s" "$CURRENT_EPOCH" "+%Y-%m-%d")
-    TARGET=$((RANDOM % 46))  # Random between 0 and 45
+    TARGET=$((RANDOM % (MAX_COMMITS - MIN_COMMITS + 1) + MIN_COMMITS))
 
     echo -n "  $CURRENT_DATE — $TARGET commits..."
 

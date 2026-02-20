@@ -5,6 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="$HOME/.mosaic.log"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONTRIBUTIONS_FILE="$REPO_DIR/contributions.log"
+CONFIG_FILE="$REPO_DIR/mosaic.conf"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Config file not found: $CONFIG_FILE"
+    exit 1
+fi
+source "$CONFIG_FILE"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -68,7 +75,7 @@ log "Current contributions today: $CONTRIBUTION_COUNT"
 
 # --- Calculate how many commits to make ---
 
-TARGET=$((RANDOM % 46))  # Random between 0 and 45
+TARGET=$((RANDOM % (MAX_COMMITS - MIN_COMMITS + 1) + MIN_COMMITS))
 NEEDED=$((TARGET - CONTRIBUTION_COUNT))
 
 if [ "$NEEDED" -le 0 ]; then
