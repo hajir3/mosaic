@@ -84,16 +84,16 @@ All settings live in `mosaic.conf` at the repo root:
 ```ini
 MIN_COMMITS=0
 MAX_COMMITS=45
-WEEKEND_COMMITS=true
-ACTIVITY=1.0
+WEEKDAY_ACTIVITY=1.0
+WEEKEND_ACTIVITY=1.0
 ```
 
-| Setting            | Default | Description                                                                                                      |
-| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| `MIN_COMMITS`      | `0`     | Minimum random commits per day                                                                                   |
-| `MAX_COMMITS`      | `45`    | Maximum random commits per day                                                                                   |
-| `WEEKEND_COMMITS`  | `true`  | Set to `false` to skip Saturdays and Sundays                                                                     |
-| `ACTIVITY`         | `1.0`   | Probability of committing on any given day (0.0 = never, 1.0 = always). E.g. `0.4` means 40% chance per day     |
+| Setting | Default | Description |
+| --- | --- | --- |
+| `MIN_COMMITS` | `0` | Minimum random commits per day |
+| `MAX_COMMITS` | `45` | Maximum random commits per day |
+| `WEEKDAY_ACTIVITY` | `1.0` | Probability of committing on weekdays (0.0 = never, 1.0 = always) |
+| `WEEKEND_ACTIVITY` | `1.0` | Probability of committing on weekends (0.0 = never, 1.0 = always) |
 
 ## Backfill Past Dates
 
@@ -162,7 +162,7 @@ Logs are written to `~/.mosaic.log` (Unix) or `%USERPROFILE%\.mosaic.log` (Windo
 ## How It Works
 
 1. Reads settings from `mosaic.conf`
-2. Skips if it's a weekend (`WEEKEND_COMMITS=false`) or the activity roll fails
+2. Rolls against `WEEKDAY_ACTIVITY` or `WEEKEND_ACTIVITY` to decide whether to commit today
 3. Queries the GitHub GraphQL API for today's commit contribution count
 4. Picks a random target between `MIN_COMMITS` and `MAX_COMMITS`
 5. If current count < target, generates the difference as commits

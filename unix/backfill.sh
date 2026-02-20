@@ -85,18 +85,17 @@ echo ""
 while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
     CURRENT_DATE=$(date -j -f "%s" "$CURRENT_EPOCH" "+%Y-%m-%d")
 
-    # Skip weekends if configured
+    # Activity roll
     DAY_OF_WEEK=$(date -j -f "%s" "$CURRENT_EPOCH" "+%u")  # 6=Saturday, 7=Sunday
-    if [ "$WEEKEND_COMMITS" = "false" ] && [ "$DAY_OF_WEEK" -ge 6 ]; then
-        echo "  $CURRENT_DATE — skipped (weekend)"
-        CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
-        continue
+    if [ "$DAY_OF_WEEK" -ge 6 ]; then
+        CURRENT_ACTIVITY="$WEEKEND_ACTIVITY"
+    else
+        CURRENT_ACTIVITY="$WEEKDAY_ACTIVITY"
     fi
 
-    # Activity roll
     ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
-    if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
-        echo "  $CURRENT_DATE — skipped (bad chance)"
+    if awk "BEGIN {exit !($ROLL >= $CURRENT_ACTIVITY)}"; then
+        echo "  $CURRENT_DATE — skipped (activity)"
         CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
         continue
     fi

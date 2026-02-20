@@ -17,19 +17,18 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# --- Weekend check ---
-
-DAY_OF_WEEK=$(date +%u)  # 6=Saturday, 7=Sunday
-if [ "$WEEKEND_COMMITS" = "false" ] && [ "$DAY_OF_WEEK" -ge 6 ]; then
-    log "Weekend — skipping (WEEKEND_COMMITS=false)."
-    exit 0
-fi
-
 # --- Activity check ---
 
+DAY_OF_WEEK=$(date +%u)  # 6=Saturday, 7=Sunday
+if [ "$DAY_OF_WEEK" -ge 6 ]; then
+    CURRENT_ACTIVITY="$WEEKEND_ACTIVITY"
+else
+    CURRENT_ACTIVITY="$WEEKDAY_ACTIVITY"
+fi
+
 ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
-if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
-    log "Activity roll $ROLL >= $ACTIVITY — skipping today."
+if awk "BEGIN {exit !($ROLL >= $CURRENT_ACTIVITY)}"; then
+    log "Activity roll $ROLL >= $CURRENT_ACTIVITY — skipping today."
     exit 0
 fi
 
