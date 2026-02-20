@@ -20,6 +20,14 @@ Get-Content $ConfigFile | ForEach-Object {
 }
 $MinCommits = [int]$config["MIN_COMMITS"]
 $MaxCommits = [int]$config["MAX_COMMITS"]
+$WeekendCommits = $config["WEEKEND_COMMITS"]
+
+# --- Weekend check ---
+
+if ($WeekendCommits -eq "false" -and (Get-Date).DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
+    Write-Host "Weekend - skipping (WEEKEND_COMMITS=false)."
+    exit 0
+}
 
 function Write-Log {
     param([string]$Message)

@@ -17,6 +17,14 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
+# --- Weekend check ---
+
+DAY_OF_WEEK=$(date +%u)  # 6=Saturday, 7=Sunday
+if [ "$WEEKEND_COMMITS" = "false" ] && [ "$DAY_OF_WEEK" -ge 6 ]; then
+    log "Weekend — skipping (WEEKEND_COMMITS=false)."
+    exit 0
+fi
+
 # --- Pre-flight checks ---
 
 if ! command -v gh &>/dev/null; then

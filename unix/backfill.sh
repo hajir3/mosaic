@@ -84,6 +84,15 @@ echo ""
 
 while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
     CURRENT_DATE=$(date -j -f "%s" "$CURRENT_EPOCH" "+%Y-%m-%d")
+
+    # Skip weekends if configured
+    DAY_OF_WEEK=$(date -j -f "%s" "$CURRENT_EPOCH" "+%u")  # 6=Saturday, 7=Sunday
+    if [ "$WEEKEND_COMMITS" = "false" ] && [ "$DAY_OF_WEEK" -ge 6 ]; then
+        echo "  $CURRENT_DATE — skipped (weekend)"
+        CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
+        continue
+    fi
+
     TARGET=$((RANDOM % (MAX_COMMITS - MIN_COMMITS + 1) + MIN_COMMITS))
 
     echo -n "  $CURRENT_DATE — $TARGET commits..."

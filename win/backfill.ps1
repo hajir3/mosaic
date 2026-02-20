@@ -19,6 +19,7 @@ Get-Content $ConfigFile | ForEach-Object {
 }
 $MinCommits = [int]$config["MIN_COMMITS"]
 $MaxCommits = [int]$config["MAX_COMMITS"]
+$WeekendCommits = $config["WEEKEND_COMMITS"]
 
 if ($args.Count -ne 2) {
     Write-Host "Usage: .\backfill.ps1 START_DATE END_DATE"
@@ -98,6 +99,14 @@ Write-Host ""
 $CurrentDate = $StartDate
 while ($CurrentDate -le $EndDate) {
     $CurrentDateStr = $CurrentDate.ToString("yyyy-MM-dd")
+
+    # Skip weekends if configured
+    if ($WeekendCommits -eq "false" -and $CurrentDate.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
+        Write-Host "  $CurrentDateStr - skipped (weekend)"
+        $CurrentDate = $CurrentDate.AddDays(1)
+        continue
+    }
+
     $Target = Get-Random -Minimum $MinCommits -Maximum ($MaxCommits + 1)
 
     Write-Host -NoNewline "  $CurrentDateStr - $Target commits..."
