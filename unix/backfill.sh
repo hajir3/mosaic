@@ -93,7 +93,7 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
         CURRENT_ACTIVITY="$WEEKDAY_ACTIVITY"
     fi
 
-    ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
+    ROLL=$(od -An -tu4 -N4 /dev/urandom | awk '{printf "%.4f", $1/4294967295}')
     if awk "BEGIN {exit !($ROLL >= $CURRENT_ACTIVITY)}"; then
         if [ "$DAY_OF_WEEK" -ge 6 ]; then
             echo "  $CURRENT_DATE — weekend"
