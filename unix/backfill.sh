@@ -93,6 +93,14 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
         continue
     fi
 
+    # Activity roll
+    ROLL=$(awk "BEGIN {srand(); print rand()}")
+    if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
+        echo "  $CURRENT_DATE — skipped (activity)"
+        CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
+        continue
+    fi
+
     TARGET=$((RANDOM % (MAX_COMMITS - MIN_COMMITS + 1) + MIN_COMMITS))
 
     echo -n "  $CURRENT_DATE — $TARGET commits..."

@@ -21,11 +21,20 @@ Get-Content $ConfigFile | ForEach-Object {
 $MinCommits = [int]$config["MIN_COMMITS"]
 $MaxCommits = [int]$config["MAX_COMMITS"]
 $WeekendCommits = $config["WEEKEND_COMMITS"]
+$Activity = [double]$config["ACTIVITY"]
 
 # --- Weekend check ---
 
 if ($WeekendCommits -eq "false" -and (Get-Date).DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
     Write-Host "Weekend - skipping (WEEKEND_COMMITS=false)."
+    exit 0
+}
+
+# --- Activity check ---
+
+$Roll = Get-Random -Minimum 0.0 -Maximum 1.0
+if ($Roll -ge $Activity) {
+    Write-Host "Activity roll $Roll >= $Activity - skipping today."
     exit 0
 }
 

@@ -20,6 +20,7 @@ Get-Content $ConfigFile | ForEach-Object {
 $MinCommits = [int]$config["MIN_COMMITS"]
 $MaxCommits = [int]$config["MAX_COMMITS"]
 $WeekendCommits = $config["WEEKEND_COMMITS"]
+$Activity = [double]$config["ACTIVITY"]
 
 if ($args.Count -ne 2) {
     Write-Host "Usage: .\backfill.ps1 START_DATE END_DATE"
@@ -103,6 +104,14 @@ while ($CurrentDate -le $EndDate) {
     # Skip weekends if configured
     if ($WeekendCommits -eq "false" -and $CurrentDate.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
         Write-Host "  $CurrentDateStr - skipped (weekend)"
+        $CurrentDate = $CurrentDate.AddDays(1)
+        continue
+    }
+
+    # Activity roll
+    $Roll = Get-Random -Minimum 0.0 -Maximum 1.0
+    if ($Roll -ge $Activity) {
+        Write-Host "  $CurrentDateStr - skipped (activity)"
         $CurrentDate = $CurrentDate.AddDays(1)
         continue
     }

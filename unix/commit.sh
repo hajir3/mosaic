@@ -25,6 +25,14 @@ if [ "$WEEKEND_COMMITS" = "false" ] && [ "$DAY_OF_WEEK" -ge 6 ]; then
     exit 0
 fi
 
+# --- Activity check ---
+
+ROLL=$(awk "BEGIN {srand(); print rand()}")
+if awk "BEGIN {exit !($ROLL >= $ACTIVITY)}"; then
+    log "Activity roll $ROLL >= $ACTIVITY — skipping today."
+    exit 0
+fi
+
 # --- Pre-flight checks ---
 
 if ! command -v gh &>/dev/null; then
