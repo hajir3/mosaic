@@ -17,6 +17,7 @@ mosaic/
 │   ├── backfill.ps1       # Backfill historical dates (PowerShell)
 │   ├── mosaic-daily.xml   # Task Scheduler XML template
 │   └── install-task.ps1   # One-click Task Scheduler setup
+├── mosaic.conf            # Configuration file
 ├── contributions.log      # Auto-generated commit log
 └── README.md
 ```
@@ -74,7 +75,25 @@ mosaic/
 .\win\commit.ps1
 ```
 
-It will check your current contribution count for today via the GitHub API, pick a random target (0-45), and add only the needed commits.
+It will check your current contribution count for today via the GitHub API, pick a random target, and add only the needed commits.
+
+## Configuration
+
+All settings live in `mosaic.conf` at the repo root:
+
+```ini
+MIN_COMMITS=0
+MAX_COMMITS=45
+WEEKEND_COMMITS=true
+ACTIVITY=1.0
+```
+
+| Setting            | Default | Description                                                                                                      |
+| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `MIN_COMMITS`      | `0`     | Minimum random commits per day                                                                                   |
+| `MAX_COMMITS`      | `45`    | Maximum random commits per day                                                                                   |
+| `WEEKEND_COMMITS`  | `true`  | Set to `false` to skip Saturdays and Sundays                                                                     |
+| `ACTIVITY`         | `1.0`   | Probability of committing on any given day (0.0 = never, 1.0 = always). E.g. `0.4` means 40% chance per day     |
 
 ## Backfill Past Dates
 
@@ -90,7 +109,7 @@ It will check your current contribution count for today via the GitHub API, pick
 .\win\backfill.ps1 2025-06-18 2026-02-18
 ```
 
-This generates 0-45 commits per day across the date range with randomized timestamps (9am-11pm).
+This generates commits per day across the date range based on your `mosaic.conf` settings, with randomized timestamps (9am-10pm).
 
 ## Automatic Scheduling
 
@@ -142,8 +161,10 @@ Logs are written to `~/.mosaic.log` (Unix) or `%USERPROFILE%\.mosaic.log` (Windo
 
 ## How It Works
 
-1. Queries the GitHub GraphQL API for today's commit contribution count
-2. Picks a random target between 0 and 45
-3. If current count < target, generates the difference as commits
-4. Each commit appends a timestamp line to `contributions.log`
-5. Pushes all new commits to the remote at once
+1. Reads settings from `mosaic.conf`
+2. Skips if it's a weekend (`WEEKEND_COMMITS=false`) or the activity roll fails
+3. Queries the GitHub GraphQL API for today's commit contribution count
+4. Picks a random target between `MIN_COMMITS` and `MAX_COMMITS`
+5. If current count < target, generates the difference as commits
+6. Each commit appends a timestamp line to `contributions.log`
+7. Pushes all new commits to the remote at once
