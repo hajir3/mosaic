@@ -110,7 +110,11 @@ while ($CurrentDate -le $EndDate) {
 
     $Roll = Get-Random -Minimum 0.0 -Maximum 1.0
     if ($Roll -ge $CurrentActivity) {
-        Write-Host "  $CurrentDateStr - skipped (activity)"
+        if ($CurrentDate.DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
+            Write-Host "  $CurrentDateStr - weekend"
+        } else {
+            Write-Host "  $CurrentDateStr - homeoffice"
+        }
         $CurrentDate = $CurrentDate.AddDays(1)
         continue
     }

@@ -95,7 +95,11 @@ while [ "$CURRENT_EPOCH" -le "$END_EPOCH" ]; do
 
     ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
     if awk "BEGIN {exit !($ROLL >= $CURRENT_ACTIVITY)}"; then
-        echo "  $CURRENT_DATE — skipped (activity)"
+        if [ "$DAY_OF_WEEK" -ge 6 ]; then
+            echo "  $CURRENT_DATE — weekend"
+        else
+            echo "  $CURRENT_DATE — homeoffice"
+        fi
         CURRENT_EPOCH=$((CURRENT_EPOCH + 86400))
         continue
     fi

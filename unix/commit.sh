@@ -28,7 +28,11 @@ fi
 
 ROLL=$(awk -v r=$RANDOM 'BEGIN {printf "%.4f", r/32768}')
 if awk "BEGIN {exit !($ROLL >= $CURRENT_ACTIVITY)}"; then
-    log "Activity roll $ROLL >= $CURRENT_ACTIVITY — skipping today."
+    if [ "$DAY_OF_WEEK" -ge 6 ]; then
+        log "weekend"
+    else
+        log "homeoffice"
+    fi
     exit 0
 fi
 

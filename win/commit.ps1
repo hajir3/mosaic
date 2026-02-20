@@ -33,7 +33,11 @@ if ((Get-Date).DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
 
 $Roll = Get-Random -Minimum 0.0 -Maximum 1.0
 if ($Roll -ge $CurrentActivity) {
-    Write-Host "Activity roll $Roll >= $CurrentActivity - skipping today."
+    if ((Get-Date).DayOfWeek -in @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
+        Write-Host "weekend"
+    } else {
+        Write-Host "homeoffice"
+    }
     exit 0
 }
 
